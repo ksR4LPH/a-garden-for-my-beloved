@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Для тебя 🌸</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Josefin+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;background:#0d1f14;font-family:'Cormorant Garamond',Georgia,serif;color:#f0e0c8;}
+
+/* BG CANVAS */
+canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;padding:28px 22px;}
+.screen.active{display:flex;}
+
+/* ══ START SCREEN ══ */
+#s-start{background:transparent;text-align:center;gap:0;}
+.start-emblem{
+  font-size:3.5rem;margin-bottom:24px;
+  animation:float 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 18px rgba(255,180,140,.35));
+}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.start-eyebrow{
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.58rem;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(200,155,110,.4);margin-bottom:12px;
+}
+.start-title{
+  font-style:italic;font-weight:300;
+  font-size:clamp(2rem,8vw,2.8rem);
+  line-height:1.15;color:#f0e0c8;
+  text-shadow:0 0 40px rgba(255,180,140,.2);
+  margin-bottom:10px;
+}
+.start-sub{
+  font-style:italic;font-weight:300;
+  font-size:clamp(.9rem,3.8vw,1.05rem);
+  color:rgba(220,185,150,.35);
+  line-height:1.8;margin-bottom:40px;
+}
+.btn-start{
+  display:inline-flex;align-items:center;gap:12px;
+  background:transparent;
+  border:1px solid rgba(200,155,110,.35);
+  padding:15px 42px;
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;
+  color:#c89b6e;cursor:pointer;
+  transition:all .25s;
+  position:relative;overflow:hidden;
+}
+.btn-start::before{
+  content:'';position:absolute;inset:0;
+  background:rgba(200,155,110,.05);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .25s;
+}
+.btn-start:active::before{transform:scaleX(1);}
+.btn-start:active{transform:scale(.97);}
+
+/* ══ GAME SCREEN ══ */
+#s-game{
+  background:transparent;
+  justify-content:flex-end;
+  padding:0 0 calc(env(safe-area-inset-bottom,0px) + 18px);
+  gap:0;
+}
+.game-header{
+  position:absolute;top:0;left:0;right:0;
+  padding:calc(env(safe-area-inset-top,20px) + 10px) 20px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:linear-gradient(to bottom,rgba(13,31,20,.9) 60%,transparent);
+  z-index:10;
+}
+.game-title{
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(200,155,110,.4);
+}
+.progress-row{display:flex;gap:8px;align-items:center;}
+.prog-flower{font-size:.95rem;opacity:.2;transition:all .4s;}
+.prog-flower.done{opacity:1;filter:drop-shadow(0 0 6px rgba(255,180,140,.5));}
+.prog-flower.cur{opacity:.7;animation:pulse-f .9s ease-in-out infinite;}
+@keyframes pulse-f{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+
+/* garden */
+.garden{
+  flex:1;width:100%;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:0 10px;
+  position:relative;
+}
+.ground{
+  width:100%;
+  background:linear-gradient(to top,#1a3a20 0%,#0f2416 60%,transparent 100%);
+  border-top:1px solid rgba(100,180,100,.08);
+  position:relative;
+  display:flex;align-items:flex-end;justify-content:space-around;
+  padding:0 8px 0;
+  height:70%;
+}
+
+/* flower */
+.flower-wrap{
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;
+  position:relative;
+  flex:1;max-width:70px;
+  padding-bottom:8px;
+}
+.flower-wrap:active .flower-head{transform:scale(.92);}
+
+.flower-stem{
+  width:2px;
+  background:linear-gradient(to top,#2d6b3a,#4a9e5c);
+  border-radius:2px;
+  transition:height 1s cubic-bezier(.34,1.56,.64,1);
+  position:relative;
+}
+.flower-leaf{
+  position:absolute;width:14px;height:8px;
+  background:rgba(60,140,70,.6);
+  border-radius:50% 0 50% 0;
+  top:40%;
+  transition:opacity .5s;
+  opacity:0;
+}
+.flower-leaf.l{left:-12px;transform:rotate(-20deg);}
+.flower-leaf.r{right:-12px;transform:rotate(20deg) scaleX(-1);}
+
+.flower-head{
+  font-size:1.9rem;
+  position:relative;z-index:2;
+  transition:all .5s cubic-bezier(.34,1.56,.64,1);
+  filter:grayscale(1) brightness(.4);
+  transform:scale(.5);
+  margin-bottom:-4px;
+  line-height:1;
+}
+.flower-water-indicator{
+  position:absolute;top:-28px;left:50%;transform:translateX(-50%);
+  font-size:.55rem;
+  font-family:'Josefin Sans',sans-serif;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(200,155,110,.6);
+  white-space:nowrap;
+  opacity:0;transition:opacity .3s;
+  pointer-events:none;
+}
+.flower-wrap:hover .flower-water-indicator,
+.flower-wrap:active .flower-water-indicator{opacity:1;}
+
+/* stages */
+.flower-wrap.s1 .flower-stem{height:20px;}
+.flower-wrap.s2 .flower-stem{height:40px;}
+.flower-wrap.s3 .flower-stem{height:60px;}
+.flower-wrap.s4 .flower-stem{height:80px;}
+.flower-wrap.s5 .flower-stem{height:95px;}
+.flower-wrap.s6 .flower-stem{height:108px;}
+.flower-wrap.s7 .flower-stem{height:118px;}
+
+.flower-wrap.s0 .flower-head{filter:grayscale(1) brightness(.4);transform:scale(.5);}
+.flower-wrap.s1 .flower-head{filter:grayscale(.8) brightness(.6);transform:scale(.65);}
+.flower-wrap.s2 .flower-head{filter:grayscale(.5) brightness(.75);transform:scale(.78);}
+.flower-wrap.s3 .flower-head{filter:grayscale(.2) brightness(.88);transform:scale(.88);}
+.flower-wrap.s4 .flower-head{filter:grayscale(0) brightness(.95);transform:scale(.95);}
+.flower-wrap.s5 .flower-head{filter:grayscale(0) brightness(1);transform:scale(1);}
+.flower-wrap.s6 .flower-head{filter:grayscale(0) brightness(1.05) drop-shadow(0 0 8px rgba(255,200,150,.4));transform:scale(1.05);}
+.flower-wrap.s7 .flower-head{filter:grayscale(0) brightness(1.1) drop-shadow(0 0 12px rgba(255,200,150,.6));transform:scale(1.1);}
+
+.flower-wrap.s3 .flower-leaf,.flower-wrap.s4 .flower-leaf,
+.flower-wrap.s5 .flower-leaf,.flower-wrap.s6 .flower-leaf,
+.flower-wrap.s7 .flower-leaf{opacity:1;}
+
+.flower-wrap.bloomed .flower-head{animation:bloom-pulse 2.5s ease-in-out infinite;}
+@keyframes bloom-pulse{0%,100%{filter:grayscale(0) brightness(1.1) drop-shadow(0 0 12px rgba(255,200,150,.6));}50%{filter:grayscale(0) brightness(1.2) drop-shadow(0 0 20px rgba(255,200,150,.8));}}
+
+/* watering can */
+.water-btn-wrap{
+  width:100%;padding:0 24px;
+  display:flex;align-items:center;justify-content:center;
+  gap:16px;
+  padding-bottom:4px;
+}
+.water-hint{
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(200,155,110,.3);text-align:center;
+}
+.water-btn{
+  width:68px;height:68px;border-radius:50%;
+  background:rgba(13,31,20,.8);
+  border:1px solid rgba(100,160,120,.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;cursor:pointer;
+  transition:all .18s;
+  box-shadow:0 0 20px rgba(100,200,130,.05);
+}
+.water-btn:active{transform:scale(.88) rotate(-20deg);}
+
+/* water drop animation */
+.drop{
+  position:fixed;pointer-events:none;z-index:50;
+  font-size:1.1rem;
+  animation:dropFall .6s ease-in forwards;
+}
+@keyframes dropFall{
+  0%{transform:translateY(0) scale(1);opacity:1;}
+  100%{transform:translateY(80px) scale(.3);opacity:0;}
+}
+
+/* ══ COMPLIMENT SCREEN ══ */
+#s-comp{
+  background:rgba(13,31,20,.97);
+  gap:22px;
+  padding:calc(env(safe-area-inset-top,20px)+24px) 24px
+           calc(env(safe-area-inset-bottom,0px)+24px);
+  overflow-y:auto;
+  justify-content:center;
+}
+.comp-flower-big{
+  font-size:4.5rem;
+  animation:comp-float 3s ease-in-out infinite;
+  filter:drop-shadow(0 0 20px rgba(255,200,150,.5));
+}
+@keyframes comp-float{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-8px) rotate(3deg);}}
+.comp-divider{
+  width:60px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,155,110,.4),transparent);
+}
+.comp-num{
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.55rem;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(200,155,110,.3);
+}
+.comp-text{
+  font-style:italic;font-weight:300;
+  font-size:clamp(1.05rem,4.5vw,1.22rem);
+  line-height:2.1;
+  color:rgba(235,210,180,.82);
+  text-align:center;max-width:300px;
+}
+.comp-text strong{
+  font-style:normal;font-weight:400;
+  color:#f0e0c8;
+}
+.btn-continue{
+  background:transparent;
+  border:1px solid rgba(200,155,110,.2);
+  padding:13px 32px;
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(200,155,110,.55);cursor:pointer;
+  transition:all .2s;min-height:48px;
+}
+.btn-continue:active{transform:scale(.97);}
+
+/* ══ LETTER SCREEN ══ */
+#s-letter{
+  background:rgba(13,31,20,.98);
+  overflow-y:auto;
+  gap:20px;
+  padding:calc(env(safe-area-inset-top,20px)+20px) 22px
+           calc(env(safe-area-inset-bottom,0px)+30px);
+  justify-content:flex-start;
+}
+.letter-header{text-align:center;padding-top:10px;}
+.letter-eyebrow{
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.58rem;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(200,155,110,.3);margin-bottom:10px;
+}
+.letter-title{
+  font-style:italic;font-weight:300;
+  font-size:clamp(1.4rem,6vw,1.85rem);
+  color:#f0e0c8;line-height:1.2;
+  text-shadow:0 0 30px rgba(255,180,140,.25);
+}
+.letter-line{
+  width:50px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(200,155,110,.4),transparent);
+  margin:12px auto 0;
+}
+.letter-body{
+  background:linear-gradient(160deg,rgba(25,50,30,.85),rgba(13,31,20,.9));
+  border:1px solid rgba(200,155,110,.1);
+  padding:28px 22px;
+  max-width:320px;width:100%;
+  position:relative;
+}
+.letter-body::before{
+  content:'';position:absolute;top:0;left:20%;right:20%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(232,196,160,.3),transparent);
+}
+.letter-body p{
+  font-style:italic;font-weight:300;
+  font-size:clamp(.9rem,3.9vw,1.02rem);
+  line-height:2.2;
+  color:rgba(215,190,160,.7);
+  margin-bottom:18px;
+  text-align:center;
+}
+.letter-body p:last-of-type{margin:0;}
+.letter-body strong{color:#f0e0c8;font-weight:400;font-style:normal;}
+.letter-sig{
+  text-align:right;margin-top:18px;
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.58rem;letter-spacing:.1em;
+  color:rgba(200,155,110,.35);
+}
+.btn-restart{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;
+  border:1px solid rgba(200,155,110,.25);
+  padding:12px 28px;
+  font-family:'Josefin Sans',sans-serif;
+  font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(200,155,110,.5);cursor:pointer;
+  transition:all .2s;min-height:48px;
+}
+.btn-restart:active{transform:scale(.97);}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+
+<!-- START -->
+<div class="screen active" id="s-start">
+  <div class="start-emblem">🌸</div>
+  <div class="start-eyebrow">Только для тебя</div>
+  <div class="start-title">Вырасти<br>наш сад</div>
+  <div class="start-sub">7 цветков ждут твоей заботы —<br>полей каждый и узнай, что внутри 💜</div>
+  <button class="btn-start" id="btnStart">🌿 &nbsp;Начать</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="s-game">
+  <div class="game-header">
+    <div class="game-title">Наш сад</div>
+    <div class="progress-row" id="progressRow"></div>
+  </div>
+  <div class="garden">
+    <div class="ground" id="ground"></div>
+  </div>
+  <div class="water-btn-wrap">
+    <div style="flex:1;text-align:right;">
+      <div class="water-hint" id="waterHint">Нажми на цветок,<br>чтобы полить</div>
+    </div>
+    <div class="water-btn" id="waterBtn" title="Лейка">🪣</div>
+    <div style="flex:1;"></div>
+  </div>
+</div>
+
+<!-- COMPLIMENT -->
+<div class="screen" id="s-comp">
+  <div class="comp-flower-big" id="compFlowerBig"></div>
+  <div class="comp-divider"></div>
+  <div class="comp-num" id="compNum"></div>
+  <div class="comp-text" id="compText"></div>
+  <div class="comp-divider"></div>
+  <button class="btn-continue" id="btnContinue">Дальше →</button>
+</div>
+
+<!-- LETTER -->
+<div class="screen" id="s-letter">
+  <div class="letter-header">
+    <div class="letter-eyebrow">Для тебя одной</div>
+    <div class="letter-title">Моя любовь,<br>моё всё...</div>
+    <div class="letter-line"></div>
+  </div>
+  <div class="letter-body">
+    <p>Ладно, раз уж ты дошла до конца —<br>признаюсь.<br><strong>Ты мой любимый человек.<br>Даже когда бесишь. Особенно когда бесишь.</strong></p>
+    <p>Я не знаю как ты это делаешь,<br>но рядом с тобой<br><strong>даже плохой день становится<br>просто смешной историей.</strong></p>
+    <p>Ты красивая, странная,<br>смешная и тёплая.<br><strong>Это редкая комбинация.<br>Я проверял. Таких больше нет.</strong></p>
+    <p>Спасибо что поливала цветочки.<br>И спасибо что ты есть.<br><strong>Это, пожалуй, главное. <br> Love U!)💜</strong></p>
+    <div class="letter-sig">— from ramz1k to my Oompa Loompa)</div>
+  </div>
+  <button class="btn-restart" id="btnRestart">🌸 &nbsp;Снова</button>
+</div>
+
+<audio id="bgMusic" loop><source src="music.mp3" type="audio/mpeg"></audio>
+
+<script>
+const FLOWERS = ['🌸','🌺','🌼','🌻','💐','🌹','🪷'];
+const MAX_STAGE = 7;
+const COMPLIMENTS = [
+  {
+    text:'Ты полила цветок.<br>Цветок счастлив.<br><strong>Я тоже счастлив — просто потому что ты существуешь.</strong><br>Это странно? Ну и ладно. 🌸'
+  },
+  {
+    text:'Учёные до сих пор не объяснили,<br>как ты умудряешься быть<br><strong>красивой, смешной и немного бесячей</strong><br>одновременно. Феномен. 🔬'
+  },
+  {
+    text:'Я пытался найти твой минус.<br>Серьёзно пытался.<br><strong>Единственное что нашёл —<br>ты слишком редко улыбаешься мне.</strong> Исправь. 😤'
+  },
+  {
+    text:'Если бы тебя не существовало —<br>я бы скучал.<br><strong>Хотя я бы не знал по кому.</strong><br>Но всё равно скучал бы. Наверное. 🤔'
+  },
+  {
+    text:'Ты смеёшься —<br>и у меня в голове<br><strong>перестают работать все мысли.</strong><br>Врачи говорят это нормально. Я им верю. 🧠'
+  },
+  {
+    text:'Честно признаюсь:<br>я иногда думаю о тебе<br><strong>в самый неподходящий момент.</strong><br>Например, прямо сейчас. Привет. 👋'
+  },
+  {
+    text:'Все 7 цветков расцвели.<br>Ты это сделала.<br><strong>Ты вообще всё делаешь — даже не замечая.</strong><br>В том числе со мной. 💜'
+  }
+];
+
+let wateringMode = false;
+let flowerStages = new Array(7).fill(0);
+let flowerBloomed = new Array(7).fill(false);
+let bloomedCount = 0;
+let musicOn = false;
+let currentCompIdx = -1;
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function playMusic(){
+  if(musicOn) return;
+  const m = document.getElementById('bgMusic');
+  m.volume = 0.35;
+  m.play().then(()=>{musicOn=true;}).catch(()=>{});
+}
+
+// ── BUILD GARDEN ──
+function buildGarden(){
+  const ground = document.getElementById('ground');
+  const progRow = document.getElementById('progressRow');
+  ground.innerHTML = '';
+  progRow.innerHTML = '';
+
+  FLOWERS.forEach((emoji, i) => {
+    // flower
+    const wrap = document.createElement('div');
+    wrap.className = 'flower-wrap s0';
+    wrap.dataset.idx = i;
+    wrap.innerHTML = `
+      <div class="flower-water-indicator">💧 Полить</div>
+      <div class="flower-head">${emoji}</div>
+      <div class="flower-stem">
+        <div class="flower-leaf l"></div>
+        <div class="flower-leaf r"></div>
+      </div>
+    `;
+    wrap.addEventListener('click', ()=> onFlowerClick(i, wrap));
+    ground.appendChild(wrap);
+
+    // progress dot
+    const dot = document.createElement('div');
+    dot.className = 'prog-flower';
+    dot.textContent = emoji;
+    dot.id = `prog-${i}`;
+    progRow.appendChild(dot);
+  });
+}
+
+function updateFlowerVisual(idx){
+  const wrap = document.querySelector(`.flower-wrap[data-idx="${idx}"]`);
+  const stage = flowerStages[idx];
+  wrap.className = `flower-wrap s${stage}`;
+  if(flowerBloomed[idx]) wrap.classList.add('bloomed');
+
+  const prog = document.getElementById(`prog-${idx}`);
+  if(flowerBloomed[idx]){
+    prog.classList.add('done');
+    prog.classList.remove('cur');
+  } else if(stage > 0){
+    prog.classList.add('cur');
+    prog.classList.remove('done');
+  }
+}
+
+function spawnDrops(x, y){
+  for(let i=0;i<5;i++){
+    const d = document.createElement('div');
+    d.className = 'drop';
+    d.textContent = '💧';
+    d.style.left = (x - 20 + Math.random()*40) + 'px';
+    d.style.top  = (y - 10) + 'px';
+    d.style.animationDelay = (Math.random()*.2)+'s';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(), 800);
+  }
+}
+
+function onFlowerClick(idx, wrap){
+  if(flowerBloomed[idx]) return;
+
+  const rect = wrap.getBoundingClientRect();
+  spawnDrops(rect.left + rect.width/2, rect.top + rect.height/2);
+
+  flowerStages[idx] = Math.min(flowerStages[idx] + 1, MAX_STAGE);
+  updateFlowerVisual(idx);
+
+  if(flowerStages[idx] === MAX_STAGE && !flowerBloomed[idx]){
+    flowerBloomed[idx] = true;
+    bloomedCount++;
+    updateFlowerVisual(idx);
+
+    // vibrate
+    if(navigator.vibrate) navigator.vibrate([30,20,60]);
+
+    // show compliment for this flower
+    currentCompIdx = idx;
+    showCompliment(idx);
+  }
+
+  // hint
+  const allBloomed = bloomedCount >= 7;
+  document.getElementById('waterHint').textContent =
+    allBloomed ? 'Все цветки расцвели 🌸' :
+    flowerStages[idx] >= 4 ? 'Почти расцвёл...' :
+    'Поливай ещё!';
+}
+
+function showCompliment(idx){
+  const comp = COMPLIMENTS[idx];
+  document.getElementById('compFlowerBig').textContent = FLOWERS[idx];
+  document.getElementById('compNum').textContent = `Цветок ${idx+1} из 7 расцвёл`;
+  document.getElementById('compText').innerHTML = comp.text;
+
+  const btn = document.getElementById('btnContinue');
+  if(bloomedCount >= 7){
+    btn.textContent = 'Открыть письмо 💌';
+    btn.onclick = ()=> show('s-letter');
+  } else {
+    btn.textContent = 'Вернуться в сад →';
+    btn.onclick = ()=> show('s-game');
+  }
+  show('s-comp');
+}
+
+// ── INIT ──
+document.getElementById('btnStart').onclick = ()=>{
+  playMusic();
+  buildGarden();
+  show('s-game');
+};
+
+document.getElementById('btnRestart').onclick = ()=>{
+  flowerStages = new Array(7).fill(0);
+  flowerBloomed = new Array(7).fill(false);
+  bloomedCount = 0;
+  buildGarden();
+  document.getElementById('waterHint').textContent = 'Нажми на цветок,\nчтобы полить';
+  show('s-game');
+};
+
+// ── CANVAS BG ──
+const bc = document.getElementById('bg');
+const bx = bc.getContext('2d');
+function resizeBg(){ bc.width=innerWidth; bc.height=innerHeight; }
+resizeBg(); window.addEventListener('resize', resizeBg);
+
+const stars = Array.from({length:80},()=>({
+  x:Math.random()*innerWidth, y:Math.random()*innerHeight*.6,
+  r:.1+Math.random()*.5, a:Math.random()*Math.PI*2,
+  sp:.003+Math.random()*.007, warm:Math.random()>.5
+}));
+const wisps = Array.from({length:5},()=>({
+  x:Math.random()*innerWidth, y:innerHeight*.3+Math.random()*innerHeight*.4,
+  rx:60+Math.random()*120, ry:30+Math.random()*60,
+  a:Math.random()*Math.PI*2, sp:.0015+Math.random()*.003,
+  green:Math.random()>.5
+}));
+const sparks = Array.from({length:10},()=>({
+  x:Math.random()*innerWidth, y:innerHeight+10,
+  vy:-.4-Math.random()*.6, vx:(Math.random()-.5)*.3,
+  a:Math.random()*Math.PI*2, sa:.008+Math.random()*.012,
+  r:.6+Math.random()*1.4, al:.04+Math.random()*.1
+}));
+
+function drawBg(){
+  bx.clearRect(0,0,bc.width,bc.height);
+  wisps.forEach(w=>{
+    w.a+=w.sp;
+    const grd=bx.createRadialGradient(w.x,w.y,0,w.x,w.y,w.rx);
+    const c=w.green?'34,74,42':'107,66,38';
+    grd.addColorStop(0,`rgba(${c},0.07)`);
+    grd.addColorStop(1,'transparent');
+    bx.globalAlpha=.35+.5*Math.abs(Math.sin(w.a));
+    bx.fillStyle=grd;
+    bx.beginPath(); bx.ellipse(w.x,w.y,w.rx,w.ry,0,0,Math.PI*2); bx.fill();
+  });
+  stars.forEach(s=>{
+    s.a+=s.sp;
+    bx.globalAlpha=.02+.16*Math.abs(Math.sin(s.a));
+    bx.fillStyle=s.warm?'#e8c4a0':'#a8d4b0';
+    bx.beginPath(); bx.arc(s.x,s.y,s.r,0,Math.PI*2); bx.fill();
+  });
+  sparks.forEach(p=>{
+    p.y+=p.vy; p.x+=p.vx; p.a+=p.sa;
+    if(p.y<-10){ p.y=bc.height+10; p.x=Math.random()*bc.width; }
+    bx.globalAlpha=p.al;
+    bx.fillStyle='#c4956a';
+    bx.save(); bx.translate(p.x,p.y); bx.rotate(p.a);
+    bx.beginPath(); bx.ellipse(0,0,p.r,p.r*2.2,0,0,Math.PI*2); bx.fill();
+    bx.restore();
+  });
+  bx.globalAlpha=1;
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+</script>
+</body>
+</html>
